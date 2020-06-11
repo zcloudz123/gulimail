@@ -42,12 +42,13 @@ public class AttrController {
         return R.ok().put("page", page);
     }
 
-    @RequestMapping("/base/list/{catelogId}")
+    @RequestMapping("/{attrType}/list/{catelogId}")
     public R baselist(
             @RequestParam Map<String, Object> params,
+            @PathVariable("attrType") String attrType,
             @PathVariable("catelogId") Long catelogId){
 //        PageUtils page = attrService.queryPage(params);
-        PageUtils page = attrService.queryBaseAttrPage(params,catelogId);
+        PageUtils page = attrService.queryBaseAttrPage(params,catelogId,attrType);
 
         return R.ok().put("page", page);
     }
@@ -89,7 +90,7 @@ public class AttrController {
      */
     @RequestMapping("/delete")
     public R delete(@RequestBody Long[] attrIds){
-		attrService.removeByIds(Arrays.asList(attrIds));
+		attrService.removeAttrDetail(attrIds);
 
         return R.ok();
     }
