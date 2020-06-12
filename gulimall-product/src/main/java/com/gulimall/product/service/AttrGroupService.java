@@ -28,5 +28,7 @@ public interface AttrGroupService extends IService<AttrGroupEntity> {
 
     PageUtils getNoRelationAttrs(Map<String, Object> params, Long attrGroupId);
 
+    void saveRelation(AttrGroupRelationVo[] attrGroupRelationVos);
+
 }
 

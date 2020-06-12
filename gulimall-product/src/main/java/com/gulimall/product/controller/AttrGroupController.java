@@ -92,6 +92,15 @@ public class AttrGroupController {
         return R.ok();
     }
 
+    //保存属性分组关联
+    @PostMapping("/attr/relation")
+    public R saveAttrRelation(
+            @RequestBody AttrGroupRelationVo[] attrGroupRelationVos){
+		attrGroupService.saveRelation(attrGroupRelationVos);
+
+        return R.ok();
+    }
+
     /**
      * 修改
      */

@@ -14,6 +14,7 @@ import com.gulimall.product.service.AttrAttrgroupRelationService;
 import com.gulimall.product.service.AttrGroupService;
 import com.gulimall.product.service.AttrService;
 import com.gulimall.product.vo.AttrGroupRelationVo;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -131,6 +132,19 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
         }
         IPage<AttrEntity> page = attrService.page(new Query<AttrEntity>().getPage(params),wrapper);
         return new PageUtils(page);
+    }
+
+    @Override
+    public void saveRelation(AttrGroupRelationVo[] attrGroupRelationVos) {
+        List<AttrAttrgroupRelationEntity> entities = new ArrayList<>();
+        for (AttrGroupRelationVo attrGroupRelationVo :
+                attrGroupRelationVos) {
+            AttrAttrgroupRelationEntity attrAttrgroupRelationEntity = new AttrAttrgroupRelationEntity();
+            BeanUtils.copyProperties(attrGroupRelationVo,attrAttrgroupRelationEntity);
+            entities.add(attrAttrgroupRelationEntity);
+
+        }
+        attrAttrgroupRelationService.saveBatch(entities);
     }
 
 }

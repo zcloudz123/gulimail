@@ -60,7 +60,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         BeanUtils.copyProperties(attrVo,attrEntity);
         this.save(attrEntity);
         //保存关联关系
-        if(attrVo.getAttrType() == ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode()){
+        if(attrVo.getAttrGroupId() != null){
             AttrAttrgroupRelationEntity attrAttrgroupRelationEntity = new AttrAttrgroupRelationEntity();
             attrAttrgroupRelationEntity.setAttrGroupId(attrVo.getAttrGroupId());
             attrAttrgroupRelationEntity.setAttrId(attrEntity.getAttrId());
@@ -94,7 +94,9 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
             BeanUtils.copyProperties(attrEntity, attrRespVo);
             //设置分组的名字
             if(ProductConstant.AttrEnum.ATTR_TYPE_BASE.getMsg().equalsIgnoreCase(attrType)){
-                AttrAttrgroupRelationEntity attrAttrGroupRE = attrAttrgroupRelationService.getOne(new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_id", attrEntity.getAttrId()));
+                AttrAttrgroupRelationEntity attrAttrGroupRE = attrAttrgroupRelationService.getOne(
+                        new QueryWrapper<AttrAttrgroupRelationEntity>()
+                                .eq("attr_id", attrEntity.getAttrId()));
                 if (attrAttrGroupRE != null) {
                     attrRespVo.setGroupName(attrGroupService.getById(attrAttrGroupRE.getAttrGroupId()).getAttrGroupName());
                 }
