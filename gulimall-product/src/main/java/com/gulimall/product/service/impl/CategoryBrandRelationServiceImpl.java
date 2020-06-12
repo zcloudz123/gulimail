@@ -9,7 +9,11 @@ import com.gulimall.product.service.BrandService;
 import com.gulimall.product.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -55,13 +59,24 @@ public class CategoryBrandRelationServiceImpl extends ServiceImpl<CategoryBrandR
         categoryBrandRelationEntity.setBrandId(brandId);
         categoryBrandRelationEntity.setBrandName(name);
         UpdateWrapper<CategoryBrandRelationEntity> wrapper = new UpdateWrapper<>();
-        wrapper.eq("brand_id",brandId);
-        this.baseMapper.update(categoryBrandRelationEntity,wrapper);
+        wrapper.eq("brand_id", brandId);
+        this.baseMapper.update(categoryBrandRelationEntity, wrapper);
     }
 
     @Override
     public void updateCategoryName(Long catId, String name) {
         this.baseMapper.updateCategoryName(catId, name);
+    }
+
+    @Override
+    public List<BrandEntity> getBrandEntitiesByCatId(Long catId) {
+        return this.list(
+                new QueryWrapper<CategoryBrandRelationEntity>().eq("catelog_id", catId)
+        )
+                .stream()
+                .map(categoryBrandRelationEntity ->
+                        brandService.getById(categoryBrandRelationEntity.getBrandId())
+                ).collect(Collectors.toList());
     }
 
 }
