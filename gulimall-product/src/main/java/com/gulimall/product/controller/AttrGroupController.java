@@ -1,15 +1,14 @@
 package com.gulimall.product.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import com.gulimall.product.entity.AttrEntity;
 import com.gulimall.product.service.CategoryService;
+import com.gulimall.product.vo.AttrGroupRelationVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.gulimall.product.entity.AttrGroupEntity;
 import com.gulimall.product.service.AttrGroupService;
@@ -65,6 +64,24 @@ public class AttrGroupController {
         return R.ok().put("attrGroup", attrGroup);
     }
 
+    //根据分组查询对应的所有属性
+    @GetMapping("/{attrGroupId}/attr/relation")
+    public R attrRelation(@PathVariable("attrGroupId") Long attrGroupId){
+        List<AttrEntity> attrs = attrGroupService.getRelationAttrs(attrGroupId);
+
+        return R.ok().put("data", attrs);
+    }
+
+    //根据分组查询对应的所有无关联属性
+    @GetMapping("/{attrGroupId}/noattr/relation")
+    public R noAttrRelation(
+            @RequestParam Map<String, Object> params,
+            @PathVariable("attrGroupId") Long attrGroupId){
+        PageUtils page = attrGroupService.getNoRelationAttrs(params,attrGroupId);
+
+        return R.ok().put("page", page);
+    }
+
     /**
      * 保存
      */
@@ -91,6 +108,14 @@ public class AttrGroupController {
     @RequestMapping("/delete")
     public R delete(@RequestBody Long[] attrGroupIds){
 		attrGroupService.removeByIds(Arrays.asList(attrGroupIds));
+
+        return R.ok();
+    }
+
+    //attrId, attrGroupId
+    @PostMapping("/attr/relation/delete")
+    public R attrRelationDel(@RequestBody AttrGroupRelationVo[] attrGroupRelationVos){
+		attrGroupService.removeRelation(attrGroupRelationVos);
 
         return R.ok();
     }

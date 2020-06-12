@@ -1,21 +1,39 @@
 package com.gulimall.product.service.impl;
 
-import org.apache.commons.lang.StringUtils;
-import org.springframework.stereotype.Service;
-import java.util.Map;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.gulimall.common.constant.ProductConstant;
 import com.gulimall.common.utils.PageUtils;
 import com.gulimall.common.utils.Query;
-
 import com.gulimall.product.dao.AttrGroupDao;
+import com.gulimall.product.entity.AttrAttrgroupRelationEntity;
+import com.gulimall.product.entity.AttrEntity;
 import com.gulimall.product.entity.AttrGroupEntity;
+import com.gulimall.product.service.AttrAttrgroupRelationService;
 import com.gulimall.product.service.AttrGroupService;
+import com.gulimall.product.service.AttrService;
+import com.gulimall.product.vo.AttrGroupRelationVo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service("attrGroupService")
 public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEntity> implements AttrGroupService {
+
+    @Autowired
+    AttrAttrgroupRelationService attrAttrgroupRelationService;
+
+    @Autowired
+    AttrService attrService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -31,14 +49,87 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
     public PageUtils queryPage(Map<String, Object> params, Integer categoryId) {
         QueryWrapper<AttrGroupEntity> wrapper = new QueryWrapper<>();
         if (categoryId != 0) {
-            wrapper.eq("catelog_id",categoryId);
+            wrapper.eq("catelog_id", categoryId);
         }
         String key = (String) params.get("key");
-        if(!StringUtils.isEmpty(key)){
-            wrapper.and(obj ->{obj.eq("attr_group_id",key).or().like("attr_group_name",key);});
+        if (!StringUtils.isEmpty(key)) {
+            wrapper.and(obj -> {
+                obj.eq("attr_group_id", key).or().like("attr_group_name", key);
+            });
         }
         IPage<AttrGroupEntity> page = this.page(new Query<AttrGroupEntity>().getPage(params),
                 wrapper);
+        return new PageUtils(page);
+    }
+
+    @Override
+    public List<AttrEntity> getRelationAttrs(Long attrGroupId) {
+        List<Long> attrIds = attrAttrgroupRelationService.list(
+                new QueryWrapper<AttrAttrgroupRelationEntity>()
+                        .eq("attr_group_id", attrGroupId))
+                .stream()
+                .map(AttrAttrgroupRelationEntity::getAttrId)
+                .collect(Collectors.toList());
+        List<AttrEntity> list = new ArrayList<>();
+        if(!CollectionUtils.isEmpty(attrIds)){
+            list.addAll(attrService.list(
+                    new QueryWrapper<AttrEntity>()
+                    .in("attr_id",attrIds)
+                    .eq("attr_type",ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode())));
+        }
+        return list;
+    }
+
+    @Override
+    public void removeRelation(AttrGroupRelationVo[] attrGroupRelationVos) {
+        QueryWrapper<AttrAttrgroupRelationEntity> wrapper = new QueryWrapper<>();
+        for (AttrGroupRelationVo attrGroupRelationVo :
+                attrGroupRelationVos) {
+            wrapper.or((obj) -> {
+                obj.eq("attr_id", attrGroupRelationVo.getAttrId())
+                        .eq("attr_group_id", attrGroupRelationVo.getAttrGroupId());
+            });
+        }
+        attrAttrgroupRelationService.remove(wrapper);
+    }
+
+    @Override
+    public PageUtils getNoRelationAttrs(Map<String, Object> params, Long attrGroupId) {
+        //当前分组只能关联自己所属分类里面的属性
+        AttrGroupEntity attrGroupEntity = this.getById(attrGroupId);
+        Long catelogId = attrGroupEntity.getCatelogId();
+
+        //当前分组只能关联别的分组没有引用的属性
+
+        //查到同一分类下的所有分组id
+        List<Long> allAttrGroupIds = this.list(new QueryWrapper<AttrGroupEntity>()
+                .eq("catelog_id", catelogId))
+                .stream()
+                .map(AttrGroupEntity::getAttrGroupId)
+                .collect(Collectors.toList());
+
+        QueryWrapper<AttrEntity> wrapper = new QueryWrapper<AttrEntity>()
+                .eq("catelog_id", catelogId)
+                .eq("attr_type", ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode());
+        
+        if(!CollectionUtils.isEmpty(allAttrGroupIds)){
+            //同一分类下的所有属性id
+            List<Long> allAttrIds = attrAttrgroupRelationService.list(
+                    new QueryWrapper<AttrAttrgroupRelationEntity>()
+                            .in("attr_group_id", allAttrGroupIds))
+                    .stream()
+                    .map(AttrAttrgroupRelationEntity::getAttrId)
+                    .collect(Collectors.toList());
+            if(!CollectionUtils.isEmpty(allAttrIds)){
+                wrapper.notIn("attr_id", allAttrIds);
+            }
+        }
+
+        String key = (String) params.get("key");
+        if(!StringUtils.isEmpty(key)){
+            wrapper.and((w)-> w.eq("attr_id",key).or().like("attr_name",key));
+        }
+        IPage<AttrEntity> page = attrService.page(new Query<AttrEntity>().getPage(params),wrapper);
         return new PageUtils(page);
     }
 
