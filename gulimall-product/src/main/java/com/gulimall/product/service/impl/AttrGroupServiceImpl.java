@@ -14,6 +14,7 @@ import com.gulimall.product.service.AttrAttrgroupRelationService;
 import com.gulimall.product.service.AttrGroupService;
 import com.gulimall.product.service.AttrService;
 import com.gulimall.product.vo.AttrGroupRelationVo;
+import com.gulimall.product.vo.AttrGroupWithAttrsVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -72,11 +73,11 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
                 .map(AttrAttrgroupRelationEntity::getAttrId)
                 .collect(Collectors.toList());
         List<AttrEntity> list = new ArrayList<>();
-        if(!CollectionUtils.isEmpty(attrIds)){
+        if (!CollectionUtils.isEmpty(attrIds)) {
             list.addAll(attrService.list(
                     new QueryWrapper<AttrEntity>()
-                    .in("attr_id",attrIds)
-                    .eq("attr_type",ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode())));
+                            .in("attr_id", attrIds)
+                            .eq("attr_type", ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode())));
         }
         return list;
     }
@@ -112,8 +113,8 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
         QueryWrapper<AttrEntity> wrapper = new QueryWrapper<AttrEntity>()
                 .eq("catelog_id", catelogId)
                 .eq("attr_type", ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode());
-        
-        if(!CollectionUtils.isEmpty(allAttrGroupIds)){
+
+        if (!CollectionUtils.isEmpty(allAttrGroupIds)) {
             //同一分类下的所有属性id
             List<Long> allAttrIds = attrAttrgroupRelationService.list(
                     new QueryWrapper<AttrAttrgroupRelationEntity>()
@@ -121,16 +122,16 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
                     .stream()
                     .map(AttrAttrgroupRelationEntity::getAttrId)
                     .collect(Collectors.toList());
-            if(!CollectionUtils.isEmpty(allAttrIds)){
+            if (!CollectionUtils.isEmpty(allAttrIds)) {
                 wrapper.notIn("attr_id", allAttrIds);
             }
         }
 
         String key = (String) params.get("key");
-        if(!StringUtils.isEmpty(key)){
-            wrapper.and((w)-> w.eq("attr_id",key).or().like("attr_name",key));
+        if (!StringUtils.isEmpty(key)) {
+            wrapper.and((w) -> w.eq("attr_id", key).or().like("attr_name", key));
         }
-        IPage<AttrEntity> page = attrService.page(new Query<AttrEntity>().getPage(params),wrapper);
+        IPage<AttrEntity> page = attrService.page(new Query<AttrEntity>().getPage(params), wrapper);
         return new PageUtils(page);
     }
 
@@ -140,11 +141,32 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
         for (AttrGroupRelationVo attrGroupRelationVo :
                 attrGroupRelationVos) {
             AttrAttrgroupRelationEntity attrAttrgroupRelationEntity = new AttrAttrgroupRelationEntity();
-            BeanUtils.copyProperties(attrGroupRelationVo,attrAttrgroupRelationEntity);
+            BeanUtils.copyProperties(attrGroupRelationVo, attrAttrgroupRelationEntity);
             entities.add(attrAttrgroupRelationEntity);
 
         }
         attrAttrgroupRelationService.saveBatch(entities);
+    }
+
+    @Override
+    public List<AttrGroupWithAttrsVo> getAttrGroupWithAttrsByCatalogId(Integer catalogId) {
+        //查出当前分类下的所有分组
+        List<AttrGroupEntity> attrGroups = this.list(new QueryWrapper<AttrGroupEntity>().eq("catelog_id", catalogId));
+
+        //查出各个分组下当前分类的所有属性，并组合
+        return attrGroups.stream().map(attrGroupEntity ->{
+            AttrGroupWithAttrsVo attrGroupWithAttrsVo = new AttrGroupWithAttrsVo();
+            BeanUtils.copyProperties(attrGroupEntity,attrGroupWithAttrsVo);
+            List<AttrEntity> attrs = attrAttrgroupRelationService.list(
+                    new QueryWrapper<AttrAttrgroupRelationEntity>()
+                            .eq("attr_group_id", attrGroupEntity.getAttrGroupId()))
+                    .stream()
+                    .map(attrAttrgroupRelationEntity ->
+                            attrService.getById(attrAttrgroupRelationEntity.getAttrId())
+                    ).collect(Collectors.toList());
+            attrGroupWithAttrsVo.setAttrs(attrs);
+            return attrGroupWithAttrsVo;
+        }).collect(Collectors.toList());
     }
 
 }
