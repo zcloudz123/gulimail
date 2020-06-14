@@ -1,8 +1,13 @@
 package com.gulimall.ware.service.impl;
 
+import com.gulimall.common.constant.WareConstant;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -42,6 +47,20 @@ public class PurchaseDetailServiceImpl extends ServiceImpl<PurchaseDetailDao, Pu
         );
 
         return new PageUtils(page);
+    }
+
+    @Override
+    public void receivedByPurchaseId(Long id) {
+        List<PurchaseDetailEntity> purchaseDetailEntities = this.list(
+                new QueryWrapper<PurchaseDetailEntity>().eq("purchase_id", id));
+        List<PurchaseDetailEntity> collect = purchaseDetailEntities.stream()
+                .map(purchaseDetailEntity -> {
+                    PurchaseDetailEntity purchaseDetailEntity1 = new PurchaseDetailEntity();
+                    purchaseDetailEntity1.setId(purchaseDetailEntity.getId());
+                    purchaseDetailEntity1.setStatus(WareConstant.PurchaseDetailStatusEnum.BUYING.getCode());
+                    return purchaseDetailEntity1;
+                }).collect(Collectors.toList());
+        this.updateBatchById(collect);
     }
 
 }

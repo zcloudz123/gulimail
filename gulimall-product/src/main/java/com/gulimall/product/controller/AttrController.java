@@ -1,16 +1,15 @@
 package com.gulimall.product.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import com.gulimall.product.entity.ProductAttrValueEntity;
+import com.gulimall.product.service.ProductAttrValueService;
 import com.gulimall.product.vo.AttrRespVo;
 import com.gulimall.product.vo.AttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.gulimall.product.entity.AttrEntity;
 import com.gulimall.product.service.AttrService;
@@ -32,6 +31,9 @@ public class AttrController {
     @Autowired
     private AttrService attrService;
 
+    @Autowired
+    private ProductAttrValueService productAttrValueService;
+
     /**
      * 列表
      */
@@ -51,6 +53,16 @@ public class AttrController {
         PageUtils page = attrService.queryBaseAttrPage(params,catelogId,attrType);
 
         return R.ok().put("page", page);
+    }
+
+    @RequestMapping("/base/listforspu/{spuId}")
+    public R baseAttrListForSpu(
+            @RequestParam Map<String, Object> params,
+            @PathVariable("spuId") Long spuId){
+
+        List<ProductAttrValueEntity> list = productAttrValueService.baseAttrListForSpu(spuId);
+
+        return R.ok().put("data", list);
     }
 
 
@@ -81,6 +93,15 @@ public class AttrController {
     @RequestMapping("/update")
     public R update(@RequestBody AttrVo attrVo){
 		attrService.updateAttrVo(attrVo);
+
+        return R.ok();
+    }
+
+    @PostMapping("/update/{spuId}")
+    public R updateSpuAttrs(
+            @PathVariable("spuId") Long spuId,
+            @RequestBody List<ProductAttrValueEntity> list){
+		productAttrValueService.updateSpuAttrs(spuId,list);
 
         return R.ok();
     }

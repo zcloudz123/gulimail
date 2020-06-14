@@ -2,9 +2,11 @@ package com.gulimall.ware.controller;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import com.gulimall.ware.vo.MergeVo;
+import com.gulimall.ware.vo.PurchaseDoneVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +15,7 @@ import com.gulimall.ware.service.PurchaseService;
 import com.gulimall.common.utils.PageUtils;
 import com.gulimall.common.utils.R;
 
+import javax.validation.Valid;
 
 
 /**
@@ -71,6 +74,25 @@ public class PurchaseController {
     @PostMapping("/merge")
     public R merge(@RequestBody MergeVo mergeVo){
 		purchaseService.mergePurchase(mergeVo);
+
+        return R.ok();
+    }
+
+    /**
+     * 领取采购单
+     * @param purchaseIds
+     * @return
+     */
+    @PostMapping("/received")
+    public R received(@RequestBody List<Long> purchaseIds){
+		purchaseService.received(purchaseIds);
+
+        return R.ok();
+    }
+
+    @PostMapping("/done")
+    public R done(@Valid @RequestBody PurchaseDoneVo purchaseDoneVo){
+		purchaseService.done(purchaseDoneVo);
 
         return R.ok();
     }
