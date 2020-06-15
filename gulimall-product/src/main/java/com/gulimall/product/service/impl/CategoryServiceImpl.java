@@ -91,21 +91,23 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Override
     public Map<String, List<Catalog2Vo>> getCatalogJson() {
-        List<CategoryEntity> categoryLevel1 = this.getLevel1Category();
+
+        //优化业务，一次查询所有分类，再统一处理
+        List<CategoryEntity> list = this.list();
+
+        List<CategoryEntity> categoryLevel1 = getParent_cid(list,0L);
         return categoryLevel1.stream().collect(Collectors.toMap(
                 cat -> cat.getCatId().toString(),
                 cat -> {
                     //遍历每个一级分类，查找所有2级分类，封装到VO
-                    List<CategoryEntity> catalog2Entites = this.list(new QueryWrapper<CategoryEntity>().eq("parent_cid", cat.getCatId()));
+                    List<CategoryEntity> catalog2Entites = getParent_cid(list,cat.getCatId());
                     return catalog2Entites.stream().map(entity -> {
                         Catalog2Vo catalog2Vo = new Catalog2Vo();
                         catalog2Vo.setCatalog1Id(entity.getParentCid());
                         catalog2Vo.setId(entity.getCatId());
                         catalog2Vo.setName(entity.getName());
                         //遍历每一个2级分类，查询封装3级分类
-                        List<Catalog3Vo> catalog3Vos = this.list(
-                                new QueryWrapper<CategoryEntity>()
-                                        .eq("parent_cid", entity.getCatId())).stream().map(
+                        List<Catalog3Vo> catalog3Vos = getParent_cid(list,entity.getCatId()).stream().map(
                                 entity1 -> {
                                     Catalog3Vo catalog3Vo = new Catalog3Vo();
                                     catalog3Vo.setId(entity1.getCatId());
@@ -117,6 +119,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
                         return catalog2Vo;
                     }).collect(Collectors.toList());
                 }));
+    }
+
+    private List<CategoryEntity> getParent_cid(List<CategoryEntity> list,Long parentCid) {
+        return list.stream().filter(categoryEntity->categoryEntity.getParentCid()==parentCid).collect(Collectors.toList());
     }
 
     private List<CategoryEntity> getChildrens(CategoryEntity entity, List<CategoryEntity> entities) {
