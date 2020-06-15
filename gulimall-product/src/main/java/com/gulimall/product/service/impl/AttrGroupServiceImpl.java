@@ -22,7 +22,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,7 +76,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
             list.addAll(attrService.list(
                     new QueryWrapper<AttrEntity>()
                             .in("attr_id", attrIds)
-                            .eq("attr_type", ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode())));
+                            .eq("attr_type", ProductConstant.AttrTypeEnum.ATTR_TYPE_BASE.getCode())));
         }
         return list;
     }
@@ -112,7 +111,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
 
         QueryWrapper<AttrEntity> wrapper = new QueryWrapper<AttrEntity>()
                 .eq("catelog_id", catelogId)
-                .eq("attr_type", ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode());
+                .eq("attr_type", ProductConstant.AttrTypeEnum.ATTR_TYPE_BASE.getCode());
 
         if (!CollectionUtils.isEmpty(allAttrGroupIds)) {
             //同一分类下的所有属性id

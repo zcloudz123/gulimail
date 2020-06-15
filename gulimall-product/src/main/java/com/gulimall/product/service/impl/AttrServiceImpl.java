@@ -71,8 +71,8 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
     @Override
     public PageUtils queryBaseAttrPage(Map<String, Object> params, Long catelogId, String attrType) {
         QueryWrapper<AttrEntity> wrapper = new QueryWrapper<>();
-        wrapper.eq("attr_type",ProductConstant.AttrEnum.ATTR_TYPE_BASE.getMsg().equalsIgnoreCase(attrType) ?
-                ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode() : ProductConstant.AttrEnum.ATTR_TYPE_SALE.getCode());
+        wrapper.eq("attr_type", ProductConstant.AttrTypeEnum.ATTR_TYPE_BASE.getMsg().equalsIgnoreCase(attrType) ?
+                ProductConstant.AttrTypeEnum.ATTR_TYPE_BASE.getCode() : ProductConstant.AttrTypeEnum.ATTR_TYPE_SALE.getCode());
         if(catelogId != 0){
             wrapper.eq("catelog_id",catelogId);
         }
@@ -93,7 +93,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
             AttrRespVo attrRespVo = new AttrRespVo();
             BeanUtils.copyProperties(attrEntity, attrRespVo);
             //设置分组的名字
-            if(ProductConstant.AttrEnum.ATTR_TYPE_BASE.getMsg().equalsIgnoreCase(attrType)){
+            if(ProductConstant.AttrTypeEnum.ATTR_TYPE_BASE.getMsg().equalsIgnoreCase(attrType)){
                 AttrAttrgroupRelationEntity attrAttrGroupRE = attrAttrgroupRelationService.getOne(
                         new QueryWrapper<AttrAttrgroupRelationEntity>()
                                 .eq("attr_id", attrEntity.getAttrId()));
@@ -158,7 +158,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         BeanUtils.copyProperties(attrVo,attrEntity);
         this.updateById(attrEntity);
         //修改分组关系
-        if(attrEntity.getAttrType() == ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode()){
+        if(attrEntity.getAttrType() == ProductConstant.AttrTypeEnum.ATTR_TYPE_BASE.getCode()){
             AttrAttrgroupRelationEntity attrAttrgroupRelationEntity = new AttrAttrgroupRelationEntity();
             attrAttrgroupRelationEntity.setAttrGroupId(attrVo.getAttrGroupId());
             attrAttrgroupRelationEntity.setAttrId(attrEntity.getAttrId());
