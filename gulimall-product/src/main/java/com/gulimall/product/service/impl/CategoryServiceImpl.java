@@ -13,15 +13,20 @@ import com.gulimall.product.service.CategoryBrandRelationService;
 import com.gulimall.product.service.CategoryService;
 import com.gulimall.product.vo.Catalog2Vo;
 import com.gulimall.product.vo.Catalog3Vo;
+import org.apache.commons.lang.BooleanUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -30,6 +35,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Autowired
     StringRedisTemplate redisTemplate;
+
+    @Autowired
+    RedissonClient redissonClient;
 
     @Autowired
     private CategoryBrandRelationService categoryBrandRelationService;
@@ -103,29 +111,35 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         //redis缓存时使用JSON字符串保存对象，可实现跨平台
         ValueOperations<String, String> ops = redisTemplate.opsForValue();
         String catalogJson = ops.get("catalogJson");
-        if(StringUtils.isEmpty(catalogJson)){
+        if (StringUtils.isEmpty(catalogJson)) {
             return this.getCatalogJsonFromDb();
         }
-        return JSON.parseObject(catalogJson,new TypeReference<Map<String, List<Catalog2Vo>>>(){});
+        return JSON.parseObject(catalogJson, new TypeReference<Map<String, List<Catalog2Vo>>>() {
+        });
     }
 
     private Map<String, List<Catalog2Vo>> getCatalogJsonFromDb() {
 
         //TODO 本地锁 synchronized JUC(lock)在分布式情况下必须使用分布式锁
-        synchronized (this) {
+        RLock lock = redissonClient.getLock("CatalogJson-lock");
+        ValueOperations<String, String> ops = redisTemplate.opsForValue();
+        Map<String, List<Catalog2Vo>> map;
+        //占分布式锁
+        lock.lock();
+        try {
             //加锁后要二次确认
-            ValueOperations<String, String> ops = redisTemplate.opsForValue();
             String catalogJson = ops.get("catalogJson");
-            if(catalogJson != null){
-                return JSON.parseObject(catalogJson,new TypeReference<Map<String, List<Catalog2Vo>>>(){});
+            if (catalogJson != null) {
+                return JSON.parseObject(catalogJson, new TypeReference<Map<String, List<Catalog2Vo>>>() {
+                });
             }
             System.out.println("查询了DB");
 
             //优化业务，一次查询所有分类，再统一处理
             List<CategoryEntity> list = this.list();
 
-            List<CategoryEntity> categoryLevel1 = getParent_cid(list,0L);
-            Map<String, List<Catalog2Vo>> map = categoryLevel1.stream().collect(Collectors.toMap(
+            List<CategoryEntity> categoryLevel1 = getParent_cid(list, 0L);
+            map = categoryLevel1.stream().collect(Collectors.toMap(
                     cat -> cat.getCatId().toString(),
                     cat -> {
                         //遍历每个一级分类，查找所有2级分类，封装到VO
@@ -149,13 +163,16 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
                         }).collect(Collectors.toList());
                     }));
             String mapS = JSON.toJSONString(map);
-            ops.set("catalogJson",mapS);
-            return map;
+            ops.set("catalogJson", mapS);
+        } finally {
+            lock.unlock();
         }
+        return map;
+
     }
 
-    private List<CategoryEntity> getParent_cid(List<CategoryEntity> list,Long parentCid) {
-        return list.stream().filter(categoryEntity->categoryEntity.getParentCid()==parentCid).collect(Collectors.toList());
+    private List<CategoryEntity> getParent_cid(List<CategoryEntity> list, Long parentCid) {
+        return list.stream().filter(categoryEntity -> categoryEntity.getParentCid() == parentCid).collect(Collectors.toList());
     }
 
     private List<CategoryEntity> getChildrens(CategoryEntity entity, List<CategoryEntity> entities) {
