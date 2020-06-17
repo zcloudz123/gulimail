@@ -6,5 +6,6 @@ package com.gulimall.search.constant;
  * @date 2020-06-14-21:29
  */
 public class EsConstant {
-    public static String PRODUCT_INDEX = "product";
+    public static final String PRODUCT_INDEX = "product";
+    public static final int PRODUCT_PAGESIZE = 20;
 }
