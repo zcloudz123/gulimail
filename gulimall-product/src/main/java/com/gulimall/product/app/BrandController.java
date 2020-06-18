@@ -1,6 +1,7 @@
 package com.gulimall.product.app;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import com.gulimall.common.valid.AddGroup;
@@ -50,6 +51,17 @@ public class BrandController {
         BrandEntity brand = brandService.getById(brandId);
 
         return R.ok().put("brand", brand);
+    }
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/infos")
+    public R info(@RequestParam("brandIds") List<Long> brandIds){
+
+        List<BrandEntity> brands = brandService.getBrandByIds(brandIds);
+
+        return R.ok().put("brands", brands);
     }
 
     /**

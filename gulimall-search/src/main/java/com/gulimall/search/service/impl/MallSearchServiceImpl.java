@@ -3,26 +3,29 @@ package com.gulimall.search.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.gulimall.common.to.SkuEsModel;
+import com.gulimall.common.utils.R;
 import com.gulimall.search.config.ElasticSearchConfig;
 import com.gulimall.search.constant.EsConstant;
+import com.gulimall.search.feign.ProductFeignService;
 import com.gulimall.search.service.MallSearchService;
+import com.gulimall.search.vo.AttrResponseVo;
 import com.gulimall.search.vo.SearchParam;
 import com.gulimall.search.vo.SearchResult;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.NestedQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -33,8 +36,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,19 +53,23 @@ public class MallSearchServiceImpl implements MallSearchService {
     @Autowired
     RestHighLevelClient restHighLevelClient;
 
+    @Autowired
+    ProductFeignService productFeignService;
+
     @Override
-    public Object search(SearchParam param) {
+    public SearchResult search(SearchParam param) {
         SearchRequest searchRequest = buildSearchRequest(param);
 
+        SearchResult searchResult = null;
         try {
             SearchResponse response = restHighLevelClient.search(searchRequest, ElasticSearchConfig.COMMON_OPTIONS);
 
-            SearchResult searchResult = buildSearchResult(response,param);
+            searchResult = buildSearchResult(response,param);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return null;
+        return searchResult;
     }
 
     private SearchResult buildSearchResult(SearchResponse response, SearchParam param) {
@@ -138,6 +146,65 @@ public class MallSearchServiceImpl implements MallSearchService {
         int totalPages = (int) ((total + EsConstant.PRODUCT_PAGESIZE - 1) / EsConstant.PRODUCT_PAGESIZE);
         searchResult.setTotalPages(totalPages);
 
+        // 构建遍历需要的页码
+        List<Integer> pageNavs = new ArrayList<>();
+        for (int i = 1; i <= totalPages; i++) {
+            pageNavs.add(i);
+        }
+        searchResult.setPageNavs(pageNavs);
+
+        // 构建面包屑属性导航
+        if (param.getAttrs() != null && param.getAttrs().size() > 0) {
+            List<SearchResult.NavVo> navVos = param.getAttrs().stream().map(item -> {
+                SearchResult.NavVo navVo = new SearchResult.NavVo();
+                String[] s = item.split("_");
+                navVo.setNavValue(s[1]);
+                R r = productFeignService.info(Long.parseLong(s[0]));
+
+                // 封装当前请求参数中已经选择的属性的id - 为了前台显示的时候排除显示这些id
+                searchResult.getAttrIds().add(Long.parseLong(s[0]));
+
+                if (r.getCode() == 0) {
+                    AttrResponseVo responseVo = r.getData("attr",new TypeReference<AttrResponseVo>() {});
+                    navVo.setNavName(responseVo.getAttrName());
+                } else {
+                    navVo.setNavName(s[0]);
+                }
+
+                // 取消面包屑以后，重新设置面包屑需要显示的url地址
+                String replace = replaceQueryString(param, item, "attrs");
+                navVo.setLink("http://search.gulimall.com/list.html?"+replace);
+                return navVo;
+            }).collect(Collectors.toList());
+
+            searchResult.setNavs(navVos);
+        }
+
+        // 构建品牌和分类的面包屑导航
+        if (param.getBrandId() != null && param.getBrandId().size() > 0) {
+            List<SearchResult.NavVo> navs = searchResult.getNavs();
+
+            SearchResult.NavVo navVo = new SearchResult.NavVo();
+            navVo.setNavName("品牌");
+            R r = productFeignService.brandsInfo(param.getBrandId());
+            if (r.getCode() == 0) {
+                List<SearchResult.BrandVo> brands = r.getData("brands",new TypeReference<List<SearchResult.BrandVo>>() {});
+                StringBuffer buffer = new StringBuffer();
+                String replace = null;
+                for (SearchResult.BrandVo brand : brands) {
+                    buffer.append(brand.getBrandName()+";");
+
+                    replace = replaceQueryString(param, brand.getBrandId() + "", "brandId");
+                }
+                navVo.setNavValue(buffer.toString());
+
+                navVo.setLink("http://search.gulimall.com/list.html?" + replace);
+
+            }
+            navs.add(navVo);
+
+        }
+
         return searchResult;
     }
 
@@ -159,28 +226,30 @@ public class MallSearchServiceImpl implements MallSearchService {
 
         //属性筛选(2_安卓,3_白色:蓝色)
         if (!CollectionUtils.isEmpty(param.getAttrs())) {
-            BoolQueryBuilder nestedQueryBool = QueryBuilders.boolQuery();
             for (String attr :
                     param.getAttrs()) {
+                BoolQueryBuilder nestedQueryBool = QueryBuilders.boolQuery();
                 String[] split = attr.split("_");
                 nestedQueryBool.must().add(QueryBuilders.termQuery("attrs.attrId", split[0]));
                 nestedQueryBool.must().add(QueryBuilders.termsQuery("attrs.attrValue", split[1].split(":")));
-
+                NestedQueryBuilder nestedQuery = QueryBuilders.nestedQuery("attrs", nestedQueryBool, ScoreMode.None);
+                boolQuery.filter().add(nestedQuery);
             }
-            NestedQueryBuilder nestedQuery = QueryBuilders.nestedQuery("attrs", nestedQueryBool, ScoreMode.None);
-            boolQuery.filter().add(nestedQuery);
         }
 
-        boolQuery.filter().add(QueryBuilders.termQuery("hasStock", param.getHasStock() == 1));
+        if(param.getHasStock() != null){
+            boolQuery.filter().add(QueryBuilders.termQuery("hasStock", param.getHasStock() == 1));
+        }
 
         if (!StringUtils.isEmpty(param.getSkuPrice())) {
             RangeQueryBuilder skuPriceRange = QueryBuilders.rangeQuery("skuPrice");
             String[] split = param.getSkuPrice().split("_");
+            String lte = split.length <= 1?null:split[1];
             if (!StringUtils.isEmpty(split[0])) {
                 skuPriceRange.gte(split[0]);
             }
-            if (!StringUtils.isEmpty(split[1])) {
-                skuPriceRange.lte(split[1]);
+            if (!StringUtils.isEmpty(lte)) {
+                skuPriceRange.lte(lte);
             }
             boolQuery.filter().add(skuPriceRange);
         }
@@ -225,5 +294,17 @@ public class MallSearchServiceImpl implements MallSearchService {
 
         return new SearchRequest(new String[]{EsConstant.PRODUCT_INDEX}, source);
 
+    }
+
+    private String replaceQueryString(SearchParam param, String value, String key) {
+        String encode = null;
+        try {
+            encode = URLEncoder.encode(value, "UTF-8");
+            encode = encode.replace("+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+//        return param.get_queryString().replace("&" + key + "=" + encode, "");
+        return param.get_queryString().replace("&" + key + "=" + encode, "");
     }
 }

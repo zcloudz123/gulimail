@@ -22,7 +22,7 @@ public class SearchParam {
     private String sort;
 
     //过滤条件(0/1),
-    private Integer hasStock = 1;
+    private Integer hasStock;
 
     //价格区间(_500,400_500,500_)
     private String skuPrice;
@@ -35,4 +35,6 @@ public class SearchParam {
 
     //分页号
     private Integer pageNum = 1;
+
+    private String _queryString;//原生查询条件
 }

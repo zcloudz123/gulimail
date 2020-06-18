@@ -1,6 +1,7 @@
 package com.gulimall.search.service;
 
 import com.gulimall.search.vo.SearchParam;
+import com.gulimall.search.vo.SearchResult;
 
 /**
  * @decription:
@@ -9,5 +10,5 @@ import com.gulimall.search.vo.SearchParam;
  */
 public interface MallSearchService {
 
-    Object search(SearchParam param);
+    SearchResult search(SearchParam param);
 }
