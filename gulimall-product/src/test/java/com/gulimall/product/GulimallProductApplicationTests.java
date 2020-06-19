@@ -1,6 +1,7 @@
 package com.gulimall.product;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.gulimall.product.config.ThreadPoolConfigProperties;
 import com.gulimall.product.entity.BrandEntity;
 import com.gulimall.product.service.AttrGroupService;
 import com.gulimall.product.service.BrandService;
@@ -21,6 +22,8 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @SpringBootTest
@@ -43,7 +46,6 @@ class GulimallProductApplicationTests {
 
     @Autowired
     SkuSaleAttrValueService skuSaleAttrValueService;
-
 
     @Test
     void testSaleAttrs() {

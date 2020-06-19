@@ -37,3 +37,8 @@ server:
 logging:
   level:
     com.gulimall.product: debug
+gulimall:
+  thread:
+    coreSize: 50
+    maxSize: 200
+    keepAliveSeconds: 10
