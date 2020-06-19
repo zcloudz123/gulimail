@@ -6,6 +6,8 @@ import com.gulimall.product.entity.AttrEntity;
 import com.gulimall.product.entity.AttrGroupEntity;
 import com.gulimall.product.vo.AttrGroupRelationVo;
 import com.gulimall.product.vo.AttrGroupWithAttrsVo;
+import com.gulimall.product.vo.SkuItemVo;
+import com.gulimall.product.vo.SpuItemAttrGroupVo;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,8 @@ public interface AttrGroupService extends IService<AttrGroupEntity> {
     void saveRelation(AttrGroupRelationVo[] attrGroupRelationVos);
 
     List<AttrGroupWithAttrsVo> getAttrGroupWithAttrsByCatalogId(Integer catalogId);
+
+    List<SpuItemAttrGroupVo> getAttrGroupWithAttrsByspuId(Long spuId, Long catalogId);
 
 }
 
