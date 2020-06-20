@@ -3,6 +3,7 @@ package com.gulimall.gulimallauthserver.feign;
 import com.gulimall.common.utils.R;
 import com.gulimall.gulimallauthserver.vo.UserLoginVo;
 import com.gulimall.gulimallauthserver.vo.UserRegistVo;
+import com.gulimall.gulimallauthserver.vo.WeiBoSocialUser;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,4 +21,7 @@ public interface MemberFeignService {
 
     @PostMapping("/member/member/login")
     R login(@RequestBody UserLoginVo userLoginVo);
+
+    @PostMapping("/member/member/oauth/login")
+    R oauthlogin(@RequestBody WeiBoSocialUser weiBoSocialUser);
 }

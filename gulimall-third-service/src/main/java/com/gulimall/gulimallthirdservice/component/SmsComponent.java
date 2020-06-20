@@ -1,6 +1,6 @@
 package com.gulimall.gulimallthirdservice.component;
 
-import com.gulimall.gulimallthirdservice.util.HttpUtils;
+import com.gulimall.common.utils.HttpUtils;
 import lombok.Data;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
