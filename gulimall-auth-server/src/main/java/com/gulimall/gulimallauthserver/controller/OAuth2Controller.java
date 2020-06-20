@@ -5,7 +5,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.gulimall.common.utils.HttpUtils;
 import com.gulimall.common.utils.R;
 import com.gulimall.gulimallauthserver.feign.MemberFeignService;
-import com.gulimall.gulimallauthserver.vo.MemberRespVo;
+import com.gulimall.common.vo.MemberRespVo;
 import com.gulimall.gulimallauthserver.vo.WeiBoSocialUser;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +36,7 @@ public class OAuth2Controller {
     MemberFeignService memberFeignService;
 
     @RequestMapping("/oauth2.0/weibo/success")
-    public String weibo(@RequestParam("code") String code) throws Exception {
+    public String weibo(@RequestParam("code") String code, HttpSession session) throws Exception {
         //换取accessToken
         Map<String, String> querys = new HashMap<>();
         querys.put("client_id","1051960411");
@@ -62,7 +63,10 @@ public class OAuth2Controller {
             if(r.getCode() == 0){
                 MemberRespVo memberRespVo = r.getData(new TypeReference<MemberRespVo>() {
                 });
-                System.out.println("登录成功!" + memberRespVo);
+//                System.out.println("登录成功!" + memberRespVo);
+                //TODO 默认是子域存储session，需要修改其作用域
+                //TODO 修改session默认的序列化机制，使用JSON存储
+                session.setAttribute("loginUser",memberRespVo);
             }else{
                 //获取失败重定向到登录页
                 return "redirect:http://auth.gulimall.com/login.html";

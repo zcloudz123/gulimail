@@ -1,7 +1,8 @@
-package com.gulimall.gulimallauthserver.vo;
+package com.gulimall.common.vo;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -10,7 +11,9 @@ import java.util.Date;
  * @date 2020-06-20-16:00
  */
 @Data
-public class MemberRespVo {
+public class MemberRespVo implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Long id;
     /**
      * 会员等级id

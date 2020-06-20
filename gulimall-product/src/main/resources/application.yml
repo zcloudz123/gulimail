@@ -4,7 +4,6 @@ spring:
     password: root
     url: jdbc:mysql://192.168.159.129:3306/gulimall_pms
     driver-class-name: com.mysql.cj.jdbc.Driver
-
   cloud:
     nacos:
       discovery:
@@ -25,6 +24,8 @@ spring:
 #      key-prefix: CACHE_
       use-key-prefix: true
       cache-null-values: true #缓存空值
+  session:
+    store-type: redis
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   global-config:
