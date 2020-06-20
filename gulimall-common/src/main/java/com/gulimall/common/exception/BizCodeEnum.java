@@ -21,6 +21,7 @@ public enum BizCodeEnum {
     SMS_CODE_INVALID_EXCEPTION(10003,"验证码错误"),
     USERNAME_UNIQUE_EXCEPTION(10004,"用户名已存在"),
     PHONE_UNIQUE_EXCEPTION(10005,"手机号已存在"),
+    LOGINACCT_PASSWORD_INVALID_EXCEPTION(10006,"账号密码错误"),
     PRODUCT_UP_EXCEPTION(11000,"商品上架异常");
 
     private int code;

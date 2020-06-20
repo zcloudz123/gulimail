@@ -5,6 +5,7 @@ import com.gulimall.common.exception.BizCodeEnum;
 import com.gulimall.common.utils.R;
 import com.gulimall.gulimallauthserver.feign.MemberFeignService;
 import com.gulimall.gulimallauthserver.feign.ThirdPartyFeignService;
+import com.gulimall.gulimallauthserver.vo.UserLoginVo;
 import com.gulimall.gulimallauthserver.vo.UserRegistVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,20 +110,42 @@ public class LoginController {
                     errors.put("msg", (String)r.get("msg"));
                     redirectAttributes.addFlashAttribute("errors", errors);
                     return "redirect:http://auth.gulimall.com/reg.html";
+                }else {
+                    //正确注册
+                    return "redirect:http://auth.gulimall.com/login.html";
                 }
 
             } else {
                 Map<String, String> errors = new HashMap<>();
                 errors.put("code", BizCodeEnum.SMS_CODE_INVALID_EXCEPTION.getMsg());
                 redirectAttributes.addFlashAttribute("errors", errors);
+                return "redirect:http://auth.gulimall.com/reg.html";
             }
         } else {
             Map<String, String> errors = new HashMap<>();
             errors.put("code", BizCodeEnum.SMS_CODE_INVALID_EXCEPTION.getMsg());
             redirectAttributes.addFlashAttribute("errors", errors);
+            return "redirect:http://auth.gulimall.com/reg.html";
         }
+    }
 
-        return "redirect:http://auth.gulimall.com/login.html";
+    @PostMapping("/login")
+    public String login(UserLoginVo userLoginVo,RedirectAttributes redirectAttributes){
+
+        //远程登录
+        R r = memberFeignService.login(userLoginVo);
+        if(r.getCode() == 0){
+
+            //session
+
+            return "redirect:http://gulimall.com";
+        }else{
+            Map<String, String> errors = new HashMap<>();
+            errors.put("msg", (String)r.get("msg"));
+            redirectAttributes.addFlashAttribute("errors", errors);
+
+            return "redirect:http://auth.gulimall.com/login.html";
+        }
     }
 
 }
