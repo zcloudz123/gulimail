@@ -3,13 +3,13 @@ package com.gulimall.member.controller;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.gulimall.common.exception.BizCodeEnum;
+import com.gulimall.member.exception.PhoneExistException;
+import com.gulimall.member.exception.UserNameExistException;
 import com.gulimall.member.feign.CouponFeignService;
+import com.gulimall.member.vo.MemberRegistVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.gulimall.member.entity.MemberEntity;
 import com.gulimall.member.service.MemberService;
@@ -33,6 +33,18 @@ public class MemberController {
 
     @Autowired
     CouponFeignService couponFeignService;
+
+    @PostMapping("/regist")
+    public R regist(@RequestBody MemberRegistVo memberRegistVo){
+        try {
+            memberService.regist(memberRegistVo);
+        } catch (PhoneExistException e) {
+            R.error(BizCodeEnum.PHONE_UNIQUE_EXCEPTION.getCode(),BizCodeEnum.PHONE_UNIQUE_EXCEPTION.getMsg());
+        } catch (UserNameExistException e){
+            R.error(BizCodeEnum.USERNAME_UNIQUE_EXCEPTION.getCode(),BizCodeEnum.USERNAME_UNIQUE_EXCEPTION.getMsg());
+        }
+        return R.ok();
+    }
 
     @RequestMapping("/coupons")
     public R test(){

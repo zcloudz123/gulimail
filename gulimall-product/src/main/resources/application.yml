@@ -39,6 +39,6 @@ logging:
     com.gulimall.product: debug
 gulimall:
   thread:
-    coreSize: 50
-    maxSize: 200
+    coreSize: 20
+    maxSize: 50
     keepAliveSeconds: 10

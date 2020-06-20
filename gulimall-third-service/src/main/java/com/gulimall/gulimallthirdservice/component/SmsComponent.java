@@ -1,57 +1,42 @@
-package com.gulimall.gulimallthirdservice;
+package com.gulimall.gulimallthirdservice.component;
 
-import com.aliyun.oss.OSSClient;
-import com.aliyun.oss.model.GetObjectRequest;
-import com.aliyun.oss.model.PutObjectRequest;
-import com.gulimall.gulimallthirdservice.component.SmsComponent;
 import com.gulimall.gulimallthirdservice.util.HttpUtils;
+import lombok.Data;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-@SpringBootTest
-class GulimallThirdServiceApplicationTests {
+/**
+ * @decription:
+ * @author: zyy
+ * @date 2020-06-19-18:12
+ */
+@ConfigurationProperties("spring.cloud.alicloud.sms")
+@Component
+@Data
+public class SmsComponent {
 
-    @Autowired
-    OSSClient ossClient;
+    private String host;
+    private String path;
+    private String skin;
+    private String sign;
+    private String appcode;
 
-    @Autowired
-    SmsComponent smsComponent;
 
-    @Test
-    void testSend() {
-        smsComponent.sendSmsCode("18745124001","110110");
-    }
-
-    @Test
-    void testUpload() {
-        ossClient.putObject(new PutObjectRequest("gulimall-zyy", "1234.jpg",new File("E://JAVA学习教程/谷粒商城/分布式基础篇/docs/pics/23cd65077f12f7f5.jpg")));
-    }
-
-    @Test
-    void contextLoads() {
-    }
-
-    @Test
-    void testMessage() {
-        String host = "https://smsmsgs.market.alicloudapi.com";
-        String path = "/sms/";
+    public void sendSmsCode(String phone,String code){
         String method = "GET";
-        String appcode = "7b92105f073b4def81074a9c5fc627da";
         Map<String, String> headers = new HashMap<String, String>();
         //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
         headers.put("Authorization", "APPCODE " + appcode);
         Map<String, String> querys = new HashMap<String, String>();
-        querys.put("code", "123456");
-        querys.put("phone", "18745124001");
-        querys.put("skin", "1");
-        querys.put("sign", "175622");
+        querys.put("code", code);
+        querys.put("phone", phone);
+        querys.put("skin", skin);
+        querys.put("sign", sign);
         //JDK 1.8示例代码请在这里下载：  http://code.fegine.com/Tools.zip
 
         try {
