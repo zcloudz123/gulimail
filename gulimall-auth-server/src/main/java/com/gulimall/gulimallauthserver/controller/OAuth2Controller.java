@@ -2,6 +2,7 @@ package com.gulimall.gulimallauthserver.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.gulimall.common.constant.AuthServerConstant;
 import com.gulimall.common.utils.HttpUtils;
 import com.gulimall.common.utils.R;
 import com.gulimall.gulimallauthserver.feign.MemberFeignService;
@@ -66,7 +67,7 @@ public class OAuth2Controller {
 //                System.out.println("登录成功!" + memberRespVo);
                 //TODO 默认是子域存储session，需要修改其作用域
                 //TODO 修改session默认的序列化机制，使用JSON存储
-                session.setAttribute("loginUser",memberRespVo);
+                session.setAttribute(AuthServerConstant.LOGIN_USER,memberRespVo);
             }else{
                 //获取失败重定向到登录页
                 return "redirect:http://auth.gulimall.com/login.html";

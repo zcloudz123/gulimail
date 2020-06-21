@@ -8,4 +8,5 @@ package com.gulimall.common.constant;
 public class AuthServerConstant {
 
     public static final String SMS_COD_CACHE_PREFIX = "sms:code:";
+    public static final String LOGIN_USER = "loginUser";
 }

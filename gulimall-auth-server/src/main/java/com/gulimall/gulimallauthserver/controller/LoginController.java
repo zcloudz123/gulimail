@@ -1,8 +1,10 @@
 package com.gulimall.gulimallauthserver.controller;
 
+import com.alibaba.fastjson.TypeReference;
 import com.gulimall.common.constant.AuthServerConstant;
 import com.gulimall.common.exception.BizCodeEnum;
 import com.gulimall.common.utils.R;
+import com.gulimall.common.vo.MemberRespVo;
 import com.gulimall.gulimallauthserver.feign.MemberFeignService;
 import com.gulimall.gulimallauthserver.feign.ThirdPartyFeignService;
 import com.gulimall.gulimallauthserver.vo.UserLoginVo;
@@ -18,6 +20,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import java.util.HashMap;
@@ -43,6 +46,14 @@ public class LoginController {
 
     @Autowired
     MemberFeignService memberFeignService;
+
+    @GetMapping("/login.html")
+    public String login(HttpSession session){
+        if(session.getAttribute(AuthServerConstant.LOGIN_USER) != null){
+            return "redirect:http://gulimall.com";
+        }
+        return "login";
+    }
 
     @ResponseBody
     @GetMapping("/sms/sendcode")
@@ -130,13 +141,16 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String login(UserLoginVo userLoginVo,RedirectAttributes redirectAttributes){
+    public String login(UserLoginVo userLoginVo, RedirectAttributes redirectAttributes, HttpSession session){
 
         //远程登录
         R r = memberFeignService.login(userLoginVo);
         if(r.getCode() == 0){
 
+            MemberRespVo memberRespVo = r.getData(new TypeReference<MemberRespVo>() {
+            });
             //session
+            session.setAttribute(AuthServerConstant.LOGIN_USER,memberRespVo);
 
             return "redirect:http://gulimall.com";
         }else{

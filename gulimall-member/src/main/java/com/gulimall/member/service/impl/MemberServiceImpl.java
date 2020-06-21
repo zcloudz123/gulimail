@@ -64,6 +64,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         memberEntity.setPassword(bCryptPasswordEncoder.encode(memberRegistVo.getPassword()));
 
+        memberEntity.setNickname(memberRegistVo.getUserName());
         memberEntity.setCreateTime(new Date());
         this.save(memberEntity);
     }

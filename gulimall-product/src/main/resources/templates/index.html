@@ -95,10 +95,11 @@
   					</b>
         <ul>
           <li>
-            <a href="http://auth.gulimall.com/login.html" th:text=|你好,${session.loginUser==null?'请登录':(session.loginUser.nickname==null?'临时用户':session.loginUser.nickname)}|>你好，请登录</a>
+            <a th:if="${session.loginUser!=null}" th:text=|欢迎你,${session.loginUser.nickname==null?'临时用户':session.loginUser.nickname}|>你好，请登录</a>
+            <a href="http://auth.gulimall.com/login.html" th:if="${session.loginUser==null}" >你好，请登录</a>
           </li>
           <li>
-            <a href="http://auth.gulimall.com/reg.html" class="li_2">免费注册</a>
+            <a href="http://auth.gulimall.com/reg.html" class="li_2" th:if="${session.loginUser==null}">免费注册</a>
           </li>
           <span>|</span>
           <li>
