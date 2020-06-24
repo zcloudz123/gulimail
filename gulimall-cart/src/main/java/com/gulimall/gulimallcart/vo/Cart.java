@@ -73,7 +73,9 @@ public class Cart {
         }else{
             for (CartItem cartItem :
                     items) {
-                total = total.add(cartItem.getTotalPrice());
+                if(cartItem.getCheck()){
+                    total = total.add(cartItem.getTotalPrice());
+                }
             }
             total = total.subtract(reduce);
             return total;

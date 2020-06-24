@@ -1,10 +1,9 @@
 package com.gulimall.gulimallthirdservice;
 
 import com.aliyun.oss.OSSClient;
-import com.aliyun.oss.model.GetObjectRequest;
 import com.aliyun.oss.model.PutObjectRequest;
+import com.gulimall.common.utils.HttpUtils;
 import com.gulimall.gulimallthirdservice.component.SmsComponent;
-import com.gulimall.gulimallthirdservice.util.HttpUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;

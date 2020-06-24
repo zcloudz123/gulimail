@@ -145,6 +145,23 @@ public class CartServiceImpl implements CartService {
         getCartOps().delete(skuId.toString());
     }
 
+    @Override
+    public List<CartItem> getCurrentUserCartItems() {
+        UserInfoTo userInfoTo = CartInterceptor.threadLocal.get();
+        if(userInfoTo.getUserId() != null) {
+            return getCartItems(CART_PREFIX + userInfoTo.getUserId()).stream()
+                    .filter(CartItem::getCheck)
+                    .map(item->{
+                        //更新价格
+                        item.setPrice(productFeignService.getPrice(item.getSkuId()));
+                        return item;
+                    })
+                    .collect(Collectors.toList());
+        }else{
+            return null;
+        }
+    }
+
     private List<CartItem> getCartItems(String cartKey) {
         BoundHashOperations<String, Object, Object> ops = redisTemplate.boundHashOps(cartKey);
         List<Object> values = ops.values();

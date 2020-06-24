@@ -15,6 +15,18 @@ spring:
     listener:
       simple:
         acknowledge-mode: manual
+  thymeleaf:
+    cache: false
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+  application:
+    name: gulimall-order
+  session:
+    store-type: redis
+  redis:
+    host: 192.168.159.129
+    port: 6379
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   global-config:
@@ -22,3 +34,8 @@ mybatis-plus:
       id-type: auto
 server:
   port: 9000
+gulimall:
+  thread:
+    coreSize: 20
+    maxSize: 50
+    keepAliveSeconds: 10
