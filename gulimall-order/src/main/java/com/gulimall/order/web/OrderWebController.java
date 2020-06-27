@@ -42,6 +42,8 @@ public class OrderWebController {
         } catch (NoStockException e) {
             redirectAttributes.addFlashAttribute("msg","库存不足");
             return "redirect:http://order.gulimall.com/toTrade";
+        } catch (Exception e){
+            return "redirect:http://order.gulimall.com/toTrade";
         }
         if(submitOrderRespVo.getCode() == 0){
             //下单成功跳转至支付选择页

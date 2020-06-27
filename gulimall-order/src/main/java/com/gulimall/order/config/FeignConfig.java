@@ -2,6 +2,7 @@ package com.gulimall.order.config;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import io.seata.tm.api.GlobalTransactionContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -28,6 +29,10 @@ public class FeignConfig {
                     HttpServletRequest request = requestAttributes.getRequest();
                     if(request != null){
                         requestTemplate.header("Cookie",request.getHeader("Cookie"));
+                    }
+                    String xid = GlobalTransactionContext.getCurrentOrCreate().getXid();
+                    if(xid != null){
+                        requestTemplate.header("TX_XID",xid);
                     }
                 }
             }

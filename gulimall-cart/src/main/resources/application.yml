@@ -12,7 +12,7 @@ spring:
   session:
     store-type: redis
 server:
-  port: 15000
+  port: 15001
 gulimall:
   thread:
     coreSize: 20

@@ -16,6 +16,8 @@ import com.gulimall.order.feign.WareFeignService;
 import com.gulimall.order.interceptor.LoginUserInterceptor;
 import com.gulimall.order.service.OrderItemService;
 import com.gulimall.order.vo.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import io.seata.tm.api.GlobalTransactionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -125,6 +127,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         return confirmVo;
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional
     @Override
     public SubmitOrderRespVo submitOrder(OrderSubmitVo orderSubmitVo) {

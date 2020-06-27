@@ -14,6 +14,7 @@ import com.gulimall.ware.feign.ProductFeignService;
 import com.gulimall.ware.service.WareSkuService;
 import com.gulimall.ware.vo.OrderItemVo;
 import com.gulimall.ware.vo.WareSkuLockVo;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

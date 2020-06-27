@@ -7,6 +7,9 @@ spring:
   cloud:
     nacos:
       server-addr: 127.0.0.1:8848
+    alibaba:
+      seata:
+        tx-service-group: my_test_tx_group
   application:
     name: gulimall-ware
   jackson:
@@ -21,3 +24,18 @@ server:
 logging:
   level:
     com.gulimall.ware: debug
+#registry.conf配置
+seata:
+  registry:
+    type: nacos
+    nacos:
+      server-addr: 127.0.0.1:8848
+  config:
+    type: file
+  tx-service-group: my_test_tx_group
+  service:
+    grouplist:
+      default: 127.0.0.1:8091
+    enable-degrade: false
+    disable-global-transaction: false
+  enabled: true
