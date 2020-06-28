@@ -2,6 +2,7 @@ package com.gulimall.order.interceptor;
 
 import com.gulimall.common.constant.AuthServerConstant;
 import com.gulimall.common.vo.MemberRespVo;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +19,12 @@ public class LoginUserInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+
+        boolean match = new AntPathMatcher().match("/order/order/status/**", request.getRequestURI());
+        if(match){
+            return true;
+        }
+
         Object attribute = request.getSession().getAttribute(AuthServerConstant.LOGIN_USER);
         if(attribute != null){
             threadLocal.set((MemberRespVo) attribute);
