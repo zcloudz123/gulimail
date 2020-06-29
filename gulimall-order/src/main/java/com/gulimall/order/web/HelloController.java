@@ -1,5 +1,7 @@
 package com.gulimall.order.web;
 
+import com.alipay.easysdk.factory.Factory;
+import com.alipay.easysdk.payment.page.models.AlipayTradePagePayResponse;
 import com.gulimall.order.entity.OrderEntity;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -21,6 +23,14 @@ public class HelloController {
 
     @Autowired
     RabbitTemplate rabbitTemplate;
+
+
+    @ResponseBody
+    @GetMapping("/test/alipay")
+    public String testAliEasyPay() throws Exception {
+        AlipayTradePagePayResponse response = Factory.Payment.Page().pay("测试支付", "20200628", "88", "http://3mcbrx.natappfree.cc/alipay.trade.page.pay-JAVA-UTF-8/return_url.jsp");
+        return response.body;
+    }
 
     @ResponseBody
     @GetMapping("/test/createOrder")

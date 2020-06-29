@@ -1,5 +1,6 @@
 package com.gulimall.order.web;
 
+import com.alipay.easysdk.factory.Factory;
 import com.gulimall.common.exception.NoStockException;
 import com.gulimall.order.service.OrderService;
 import com.gulimall.order.vo.OrderConfirmVo;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.concurrent.ExecutionException;

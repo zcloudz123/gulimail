@@ -1,4 +1,4 @@
-package com.gulimall.order.interceptor;
+package com.gulimall.member.interceptor;
 
 import com.gulimall.common.constant.AuthServerConstant;
 import com.gulimall.common.vo.MemberRespVo;
@@ -20,13 +20,8 @@ public class LoginUserInterceptor extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
-        boolean match = new AntPathMatcher().match("/order/order/status/**", request.getRequestURI());
+        boolean match = new AntPathMatcher().match("/member/**", request.getRequestURI());
         if(match){
-            return true;
-        }
-
-        boolean match2 = new AntPathMatcher().match("/payed/notify/**", request.getRequestURI());
-        if(match2){
             return true;
         }
 

@@ -1,6 +1,7 @@
 package com.gulimall.order.service.impl;
 
 import com.alibaba.fastjson.TypeReference;
+import com.alipay.easysdk.factory.Factory;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -16,6 +17,7 @@ import com.gulimall.common.vo.MemberRespVo;
 import com.gulimall.order.dao.OrderDao;
 import com.gulimall.order.entity.OrderEntity;
 import com.gulimall.order.entity.OrderItemEntity;
+import com.gulimall.order.entity.PaymentInfoEntity;
 import com.gulimall.order.enume.OrderStatusEnum;
 import com.gulimall.order.feign.CartFeignService;
 import com.gulimall.order.feign.MemberFeignService;
@@ -24,6 +26,7 @@ import com.gulimall.order.feign.WareFeignService;
 import com.gulimall.order.interceptor.LoginUserInterceptor;
 import com.gulimall.order.service.OrderItemService;
 import com.gulimall.order.service.OrderService;
+import com.gulimall.order.service.PaymentInfoService;
 import com.gulimall.order.vo.*;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
@@ -71,6 +74,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     @Autowired
     OrderItemService orderItemService;
+
+    @Autowired
+    PaymentInfoService paymentInfoService;
 
     @Autowired
     RabbitTemplate rabbitTemplate;
@@ -200,6 +206,64 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             BeanUtils.copyProperties(entity,orderTo);
             rabbitTemplate.convertAndSend("order-event-exchange","order.release.other",orderTo);
         }
+    }
+
+    @Override
+    public PayVo getOrderPay(String orderSn) {
+        PayVo payVo = new PayVo();
+        OrderEntity orderEntity = this.getOrderByOrderSn(orderSn);
+        payVo.setTotal_amount(orderEntity.getPayAmount().setScale(2,BigDecimal.ROUND_UP).toString());
+        payVo.setOut_trade_no(orderEntity.getOrderSn());
+        List<OrderItemEntity> orderItems = orderItemService.list(new QueryWrapper<OrderItemEntity>().eq("order_sn", orderSn));
+        payVo.setSubject(orderItems.get(0).getSkuName());
+
+        return payVo;
+    }
+
+    @Override
+    public PageUtils queryPageWithItems(Map<String, Object> params) {
+        MemberRespVo memberRespVo = LoginUserInterceptor.threadLocal.get();
+        IPage<OrderEntity> page = this.page(
+                new Query<OrderEntity>().getPage(params),
+                new QueryWrapper<OrderEntity>().eq("member_id",memberRespVo.getId()).orderByDesc("id")
+        );
+        page.getRecords().forEach(orderEntity -> orderEntity.setOrderItemEntities(orderItemService.list(new QueryWrapper<OrderItemEntity>().eq("order_sn",orderEntity.getOrderSn()))));
+
+        return new PageUtils(page);
+    }
+
+    //处理支付宝的处理结果
+    @Override
+    public String handlePayResult(PayAsyncVo payAsyncVo, Map<String, String> checkMap) throws Exception {
+        //保存交易流水
+        PaymentInfoEntity paymentInfoEntity = new PaymentInfoEntity();
+        paymentInfoEntity.setAlipayTradeNo(payAsyncVo.getTrade_no());
+        paymentInfoEntity.setOrderSn(payAsyncVo.getOut_trade_no());
+        paymentInfoEntity.setPaymentStatus(payAsyncVo.getTrade_status());
+        paymentInfoEntity.setCallbackTime(payAsyncVo.getGmt_payment());
+        paymentInfoEntity.setTotalAmount(payAsyncVo.getTotal_amount());
+        paymentInfoService.save(paymentInfoEntity);
+
+        //重要：：：验签
+        if(Factory.Payment.Common().verifyNotify(checkMap)){
+            System.out.println("签名验证成功");
+        }else{
+            System.out.println("验签失败");
+            return "error";
+        }
+
+        String tradeStatus = payAsyncVo.getTrade_status();
+        if("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISH".equals(tradeStatus)){
+            String outTradeNo = payAsyncVo.getOut_trade_no();
+            this.updateOrderStatus(outTradeNo,OrderStatusEnum.PAYED.getCode());
+        }
+        return "success";
+
+    }
+
+    @Override
+    public void updateOrderStatus(String outTradeNo, Integer status) {
+        baseMapper.updateOrderStatus(outTradeNo, status);
     }
 
     private void saveOrder(OrderCreateTo order) {

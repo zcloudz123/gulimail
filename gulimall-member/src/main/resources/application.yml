@@ -4,18 +4,25 @@ spring:
     password: root
     url: jdbc:mysql://192.168.159.129:3306/gulimall_ums
     driver-class-name: com.mysql.cj.jdbc.Driver
-
+  redis:
+    host: 192.168.159.129
+    port: 6379
+  session:
+    store-type: redis
   cloud:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
   application:
     name: gulimall-member
+  thymeleaf:
+    cache: false
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   global-config:
     db-config:
       id-type: auto
+
 
 server:
   port: 8000
