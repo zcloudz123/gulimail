@@ -1,4 +1,4 @@
-package com.gulimall.product.app;
+package com.gulimall.product.web;
 
 import com.gulimall.product.service.SkuInfoService;
 import com.gulimall.product.vo.SkuItemVo;

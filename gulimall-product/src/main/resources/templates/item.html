@@ -59,8 +59,9 @@
             </ul>
             <ul class="header_ul_right">
                 <li>
-                    <a th:if="${session.loginUser!=null}" th:text=|欢迎你,${session.loginUser.nickname==null?'临时用户':session.loginUser.nickname}|>你好，请登录</a>
-                    <a href="http://auth.gulimall.com/login.html" th:if="${session.loginUser==null}" >你好，请登录</a>
+                    <a th:if="${session.loginUser!=null}"
+                       th:text=|欢迎你,${session.loginUser.nickname==null?'临时用户':session.loginUser.nickname}|>你好，请登录</a>
+                    <a href="http://auth.gulimall.com/login.html" th:if="${session.loginUser==null}">你好，请登录</a>
                 </li>
                 <li>
                     <a href="http://auth.gulimall.com/reg.html" class="li_2" th:if="${session.loginUser==null}">免费注册</a>
@@ -519,13 +520,18 @@
                 </div>
                 <div class="box-summary clear">
                     <ul>
-                        <li>京东价</li>
+                        <li>谷粒商城价</li>
                         <li>
                             <span>￥</span>
                             <span th:text="${#numbers.formatDecimal(item.info.price,3,2)}">4499.00</span>
                         </li>
-                        <li>
-                            预约享资格
+                        <li style="color: red;" th:if="${item.seckillInfoVo != null}">
+                            <span th:if="${#dates.createNow().getTime() < item.seckillInfoVo.startTime}">
+                            商品将会在[[${#dates.format(new java.util.Date(item.seckillInfoVo.startTime),"yyyy-MM-dd hh:mm:ss")}]]开启秒杀
+                            </span>
+                            <span th:if="${#dates.createNow().getTime() >= item.seckillInfoVo.startTime && #dates.createNow().getTime() < item.seckillInfoVo.endTime}">
+                            商品正在秒杀，秒杀价:￥[[${#numbers.formatDecimal(item.seckillInfoVo.seckillPrice,1,2)}]]
+                            </span>
                         </li>
                         <li>
                             <a href="/static/item/">
@@ -1309,20 +1315,20 @@
             skus.push($(this).attr("skus").split(","));
         });
         var filterEle;
-        for(var i = 1 ;i < skus.length; i++){
+        for (var i = 1; i < skus.length; i++) {
             filterEle = $(skus[0]).filter(skus[i]);
         }
         location.href = "http://item.gulimall.com/" + filterEle[0] + ".html";
     })
     $(function () {
-        $(".sku_attr_value").parent().css({"border":"solid 1px #CCC"});
-        $("a[class='sku_attr_value checked']").parent().css({"border":"solid 1px red"});
+        $(".sku_attr_value").parent().css({"border": "solid 1px #CCC"});
+        $("a[class='sku_attr_value checked']").parent().css({"border": "solid 1px red"});
     })
 
     $("#addToCart").click(function () {
         var count = $("#count").val();
         var skuId = $(this).attr("skuId");
-        location.href = "http://cart.gulimall.com/addToCart?skuId="+ skuId + "&count="+ count;
+        location.href = "http://cart.gulimall.com/addToCart?skuId=" + skuId + "&count=" + count;
         return false;
     })
 </script>
