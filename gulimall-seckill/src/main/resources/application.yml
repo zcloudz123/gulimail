@@ -10,5 +10,13 @@ spring:
     scheduling:
       pool:
         size: 5
+  session:
+    store-type: redis
+  rabbitmq:
+    host: 192.168.159.129
+    port: 5672
+    virtual-host: /
+  thymeleaf:
+    cache: false
 server:
   port: 16000

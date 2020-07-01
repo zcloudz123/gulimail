@@ -1,6 +1,7 @@
 package com.gulimall.order.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.gulimall.common.to.mq.SeckillOrderTo;
 import com.gulimall.common.utils.PageUtils;
 import com.gulimall.order.entity.OrderEntity;
 import com.gulimall.order.vo.*;
@@ -34,5 +35,7 @@ public interface OrderService extends IService<OrderEntity> {
     String handlePayResult(PayAsyncVo payAsyncVo, Map<String, String> checkMap) throws Exception;
 
     void updateOrderStatus(String outTradeNo, Integer code);
+
+    void createSeckillOrder(SeckillOrderTo seckillOrderTo);
 }
 

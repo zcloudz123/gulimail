@@ -10,6 +10,7 @@ import com.gulimall.common.constant.OrderConstant;
 import com.gulimall.common.exception.NoStockException;
 import com.gulimall.common.to.SkuHasStockVo;
 import com.gulimall.common.to.mq.OrderTo;
+import com.gulimall.common.to.mq.SeckillOrderTo;
 import com.gulimall.common.utils.PageUtils;
 import com.gulimall.common.utils.Query;
 import com.gulimall.common.utils.R;
@@ -264,6 +265,29 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     @Override
     public void updateOrderStatus(String outTradeNo, Integer status) {
         baseMapper.updateOrderStatus(outTradeNo, status);
+    }
+
+    @Transactional
+    @Override
+    public void createSeckillOrder(SeckillOrderTo seckillOrderTo) {
+        //TODO 保存订单信息
+        OrderEntity orderEntity = new OrderEntity();
+        orderEntity.setOrderSn(seckillOrderTo.getOrderSn());
+        orderEntity.setMemberId(seckillOrderTo.getMemberId());
+        orderEntity.setStatus(OrderStatusEnum.CREATE_NEW.getCode());
+        BigDecimal payAmount = seckillOrderTo.getSeckillPrice().multiply(new BigDecimal(seckillOrderTo.getNum()));
+        orderEntity.setPayAmount(payAmount);
+        orderEntity.setCreateTime(new Date());
+        this.save(orderEntity);
+
+        //TODO 保存订单项信息
+        OrderItemEntity orderItemEntity = new OrderItemEntity();
+        orderItemEntity.setOrderSn(seckillOrderTo.getOrderSn());
+        orderItemEntity.setRealAmount(payAmount);
+        orderItemEntity.setSkuQuantity(seckillOrderTo.getNum());
+        orderItemEntity.setSkuId(seckillOrderTo.getSkuId());
+        orderItemEntity.setSkuName("快捷支付秒杀商品");
+        orderItemService.save(orderItemEntity);
     }
 
     private void saveOrder(OrderCreateTo order) {

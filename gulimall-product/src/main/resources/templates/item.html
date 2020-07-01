@@ -651,7 +651,12 @@
 
                         </div>
                     </div>
-                    <div class="box-btns-two">
+                    <div class="box-btns-two" th:if="${item.seckillInfoVo != null && #dates.createNow().getTime() >= item.seckillInfoVo.startTime && #dates.createNow().getTime() < item.seckillInfoVo.endTime}">
+                        <a id="seckillBtn" th:attr="skuId=${item.info.skuId},sessionId=${item.seckillInfoVo.promotionSessionId},code=${item.seckillInfoVo.randomCode}">
+                            立即抢购
+                        </a>
+                    </div>
+                    <div class="box-btns-two" th:if="${item.seckillInfoVo == null || #dates.createNow().getTime() < item.seckillInfoVo.startTime || #dates.createNow().getTime() >= item.seckillInfoVo.endTime}">
                         <a id="addToCart" th:attr="skuId=${item.info.skuId}">
                             加入购物车
                         </a>
@@ -1329,6 +1334,19 @@
         var count = $("#count").val();
         var skuId = $(this).attr("skuId");
         location.href = "http://cart.gulimall.com/addToCart?skuId=" + skuId + "&count=" + count;
+        return false;
+    })
+    
+    $("#seckillBtn").click(function () {
+        var isLogin = [[${session.loginUser != null}]];
+        if(isLogin){
+            var killId = $(this).attr("sessionId") + "_" + $(this).attr("skuId");
+            var code = $(this).attr("code");
+            var num = $("#count").val();
+            location.href = "http://seckill.gulimall.com/kill?killId=" + killId + "&code=" + code + "&num=" + num;
+        }else{
+            alert("请先登录才可秒杀该商品！")
+        }
         return false;
     })
 </script>

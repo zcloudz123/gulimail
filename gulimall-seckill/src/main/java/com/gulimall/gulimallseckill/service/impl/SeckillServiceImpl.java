@@ -2,16 +2,20 @@ package com.gulimall.gulimallseckill.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.gulimall.common.to.mq.SeckillOrderTo;
 import com.gulimall.common.utils.R;
+import com.gulimall.common.vo.MemberRespVo;
 import com.gulimall.gulimallseckill.feign.CouponFeignService;
 import com.gulimall.gulimallseckill.feign.ProductFeignService;
+import com.gulimall.gulimallseckill.interceptor.LoginUserInterceptor;
 import com.gulimall.gulimallseckill.service.SeckillService;
 import com.gulimall.gulimallseckill.to.SeckillSkuRedisTo;
 import com.gulimall.gulimallseckill.vo.SeckillSessionWithSkusVo;
-import com.gulimall.gulimallseckill.vo.SeckillSkuVo;
 import com.gulimall.gulimallseckill.vo.SkuInfoVo;
 import org.redisson.api.RSemaphore;
 import org.redisson.api.RedissonClient;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundHashOperations;
@@ -19,7 +23,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -42,6 +50,9 @@ public class SeckillServiceImpl implements SeckillService {
 
     @Autowired
     RedissonClient redissonClient;
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
 
     //活动key:前缀 + startTime_endTime  value:skuIds    list结构
     private final String SESSIONS_PREFIX = "seckill:sessions:";
@@ -98,20 +109,72 @@ public class SeckillServiceImpl implements SeckillService {
         BoundHashOperations<String, String, String> ops = stringRedisTemplate.boundHashOps(SKUKILL_CACHE_PREFIX);
         Set<String> keys = ops.keys();
         String reg = "\\d_" + skuId;
-        if(!CollectionUtils.isEmpty(keys)){
+        if (!CollectionUtils.isEmpty(keys)) {
             for (String key : keys) {
-                if(Pattern.matches(reg,key)){
+                if (Pattern.matches(reg, key)) {
                     SeckillSkuRedisTo skuRedisTo = JSON.parseObject(ops.get(key), SeckillSkuRedisTo.class);
                     Long startTime = skuRedisTo.getStartTime();
                     Long endTime = skuRedisTo.getEndTime();
                     long now = new Date().getTime();
-                    if(now < startTime && now >= endTime){
+                    if (now < startTime && now >= endTime) {
                         skuRedisTo.setRandomCode(null);
                     }
                     return skuRedisTo;
                 }
             }
         }
+        return null;
+    }
+
+    //秒杀服务主处理方法
+    @Override
+    public String kill(String killId, String code, Integer num) {
+        MemberRespVo memberRespVo = LoginUserInterceptor.threadLocal.get();
+        //获取秒杀商品的详细信息
+        BoundHashOperations<String, String, String> ops = stringRedisTemplate.boundHashOps(SKUKILL_CACHE_PREFIX);
+        String s = ops.get(killId);
+        if (s == null) {
+            return null;
+        } else {
+            SeckillSkuRedisTo skuRedisTo = JSON.parseObject(s, SeckillSkuRedisTo.class);
+            //校验合法性
+            long now = new Date().getTime();
+            Long startTime = skuRedisTo.getStartTime();
+            Long endTime = skuRedisTo.getEndTime();
+            //校验时间
+            if (now >= startTime && now < endTime) {
+                //校验code
+                if (skuRedisTo.getRandomCode().equals(code)) {
+                    //校验数量及是否重复购买
+                    if (num <= skuRedisTo.getSeckillLimit().intValue()) {
+                        String redisUserKey = memberRespVo.getId() + "_" + killId;
+                        //设置自动过期
+                        long ttl = endTime - startTime;
+                        boolean aBoolean = stringRedisTemplate.opsForValue().setIfAbsent(redisUserKey, num.toString(), ttl, TimeUnit.MILLISECONDS);
+                        if(aBoolean){
+                            RSemaphore semaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + code);
+                            try {
+                                boolean flag = semaphore.tryAcquire(num, 100, TimeUnit.MILLISECONDS);
+                                if(flag){
+                                    //秒杀成功，快速下单
+                                    String timeId = IdWorker.getTimeId();
+                                    SeckillOrderTo seckillOrderTo = new SeckillOrderTo();
+                                    BeanUtils.copyProperties(skuRedisTo,seckillOrderTo);
+                                    seckillOrderTo.setOrderSn(timeId);
+                                    seckillOrderTo.setNum(num);
+                                    seckillOrderTo.setMemberId(memberRespVo.getId());
+                                    rabbitTemplate.convertAndSend("order-event-exchange","order.seckill.order",seckillOrderTo);
+                                    return timeId;
+                                }
+                            } catch (InterruptedException e) {
+                                return null;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
@@ -122,7 +185,7 @@ public class SeckillServiceImpl implements SeckillService {
             String key = SESSIONS_PREFIX + startTime + "_" + endTime;
             List<String> collect = seckillSessionWithSkusVo.getSkuRelationEntities().stream().map(seckillSkuVo -> seckillSkuVo.getPromotionSessionId() + "_" + seckillSkuVo.getSkuId()).collect(Collectors.toList());
             //缓存活动信息 (seckill:sessions:1000_1999   1,2,3) (seckill:sessions:2000_2999   4,6)
-            if(!stringRedisTemplate.hasKey(key)){
+            if (!stringRedisTemplate.hasKey(key)) {
                 stringRedisTemplate.opsForList().leftPushAll(key, collect);
             }
         });

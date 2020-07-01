@@ -4,6 +4,7 @@ import com.alipay.easysdk.factory.Factory;
 import com.alipay.easysdk.payment.page.models.AlipayTradePagePayResponse;
 import com.gulimall.order.service.OrderService;
 import com.gulimall.order.vo.PayVo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @author: zyy
  * @date 2020-06-28-17:28
  */
+@Slf4j
 @Controller
 public class PayWebController {
 
@@ -26,6 +28,7 @@ public class PayWebController {
     @GetMapping("payOrder")
     public String payOrder(@RequestParam("orderSn") String orderSn) throws Exception {
         PayVo payVo = orderService.getOrderPay(orderSn);
+        log.info(payVo.toString());
         AlipayTradePagePayResponse response = Factory.Payment.Page().optional("timeout_express","1m").pay(payVo.getSubject(), payVo.getOut_trade_no(), payVo.getTotal_amount(), payVo.getReturnUrl());
         return response.body;
     }

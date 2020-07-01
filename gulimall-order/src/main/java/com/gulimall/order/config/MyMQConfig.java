@@ -36,6 +36,11 @@ public class MyMQConfig {
     }
 
     @Bean
+    public Queue orderSeckillOrderQueue(){
+        return new Queue("order.seckill.order.queue", true, false, false);
+    }
+
+    @Bean
     public Exchange orderEventExchange(){
         return new TopicExchange("order-event-exchange",true,false);
     }
@@ -48,6 +53,11 @@ public class MyMQConfig {
     @Bean
     public Binding orderReleaseOrderBinding(){
         return new Binding("order.release.delay.queue", Binding.DestinationType.QUEUE,"order-event-exchange","order.release.order",new HashMap<>());
+    }
+
+    @Bean
+    public Binding orderSeckillOrderBinding(){
+        return new Binding("order.seckill.order.queue", Binding.DestinationType.QUEUE,"order-event-exchange","order.seckill.order",new HashMap<>());
     }
 
     @Bean
