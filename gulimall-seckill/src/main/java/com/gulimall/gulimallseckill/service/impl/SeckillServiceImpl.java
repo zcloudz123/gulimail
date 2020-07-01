@@ -1,5 +1,9 @@
 package com.gulimall.gulimallseckill.service.impl;
 
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -13,6 +17,7 @@ import com.gulimall.gulimallseckill.service.SeckillService;
 import com.gulimall.gulimallseckill.to.SeckillSkuRedisTo;
 import com.gulimall.gulimallseckill.vo.SeckillSessionWithSkusVo;
 import com.gulimall.gulimallseckill.vo.SkuInfoVo;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RSemaphore;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -36,6 +41,7 @@ import java.util.stream.Collectors;
  * @author: zyy
  * @date 2020-06-29-21:09
  */
+@Slf4j
 @Service
 public class SeckillServiceImpl implements SeckillService {
 
@@ -79,27 +85,37 @@ public class SeckillServiceImpl implements SeckillService {
         }
     }
 
+    @SentinelResource(value = "seckillSkusAnnotation",blockHandler = "blockHandler")
     @Override
     public List<SeckillSkuRedisTo> getCurrentSeckillSkus() {
         //找到属于当前时间的秒杀活动
-        long now = new Date().getTime();
-        Set<String> keys = stringRedisTemplate.keys(SESSIONS_PREFIX + "*");
-        for (String key : keys) {
-            String replace = key.replace(SESSIONS_PREFIX, "");
-            String[] split = replace.split("_");
-            Long start = Long.parseLong(split[0]);
-            Long end = Long.parseLong(split[1]);
-            if (now >= start && now < end) {
-                List<String> skuIds = stringRedisTemplate.opsForList().range(key, -100, 100);
-                BoundHashOperations<String, String, String> ops = stringRedisTemplate.boundHashOps(SKUKILL_CACHE_PREFIX);
-                List<String> list = ops.multiGet(skuIds);
-                if (!CollectionUtils.isEmpty(list)) {
-                    return list.stream().map(o -> JSON.parseObject(o, SeckillSkuRedisTo.class)).collect(Collectors.toList());
+        try(Entry entry = SphU.entry("currentSeckillSkus")) {
+            long now = new Date().getTime();
+            Set<String> keys = stringRedisTemplate.keys(SESSIONS_PREFIX + "*");
+            for (String key : keys) {
+                String replace = key.replace(SESSIONS_PREFIX, "");
+                String[] split = replace.split("_");
+                Long start = Long.parseLong(split[0]);
+                Long end = Long.parseLong(split[1]);
+                if (now >= start && now < end) {
+                    List<String> skuIds = stringRedisTemplate.opsForList().range(key, -100, 100);
+                    BoundHashOperations<String, String, String> ops = stringRedisTemplate.boundHashOps(SKUKILL_CACHE_PREFIX);
+                    List<String> list = ops.multiGet(skuIds);
+                    if (!CollectionUtils.isEmpty(list)) {
+                        return list.stream().map(o -> JSON.parseObject(o, SeckillSkuRedisTo.class)).collect(Collectors.toList());
+                    }
+                    break;
                 }
-                break;
             }
+        } catch (NumberFormatException | BlockException e) {
+            log.info("查询seckill的商品服务降级");
         }
         //获取当前秒杀活动的秒杀商品信息
+        return null;
+    }
+
+    public List<SeckillSkuRedisTo> blockHandler(BlockException ex) {
+        log.info("原方法被限流了");
         return null;
     }
 

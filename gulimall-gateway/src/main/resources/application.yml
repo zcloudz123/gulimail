@@ -72,6 +72,11 @@ spring:
           uri: lb://gulimall-seckill
           predicates:
             - Host=seckill.gulimall.com
+    sentinel:
+      transport:
+        dashboard: localhost:8888
+      filter:
+        url-patterns: /**
   application:
     name: gulimall-gateway
 server:

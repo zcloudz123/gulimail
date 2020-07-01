@@ -3,6 +3,7 @@ package com.gulimall.gulimallseckill.controller;
 import com.gulimall.common.utils.R;
 import com.gulimall.gulimallseckill.service.SeckillService;
 import com.gulimall.gulimallseckill.to.SeckillSkuRedisTo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,6 +16,7 @@ import java.util.List;
  * @author: zyy
  * @date 2020-06-30-10:17
  */
+@Slf4j
 @Controller
 public class SeckillController {
 
@@ -37,6 +39,8 @@ public class SeckillController {
     @ResponseBody
     @GetMapping("/currentSeckillSkus")
     public R getCurrentSeckillSkus(){
+        log.info("currentSeckillSkus正在执行");
+
         List<SeckillSkuRedisTo> skuRedisTos = seckillService.getCurrentSeckillSkus();
         return R.ok().setData(skuRedisTos);
     }
@@ -46,6 +50,11 @@ public class SeckillController {
     public R getSkukillInfo(@PathVariable("skuId") Long skuId){
 
         SeckillSkuRedisTo skuRedisTo = seckillService.getSkukillInfo(skuId);
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         return R.ok().setData(skuRedisTo);
     }

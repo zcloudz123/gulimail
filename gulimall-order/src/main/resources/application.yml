@@ -23,6 +23,11 @@ spring:
     alibaba:
       seata:
         tx-service-group: my_test_tx_group
+    sentinel:
+      transport:
+        dashboard: localhost:8888
+      filter:
+        url-patterns: /**
   application:
     name: gulimall-order
   session:

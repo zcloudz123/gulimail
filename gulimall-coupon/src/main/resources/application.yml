@@ -17,3 +17,10 @@
 #
 #server:
 #  port: 7000
+spring:
+  cloud:
+    sentinel:
+      transport:
+        dashboard: localhost:8888
+      filter:
+        url-patterns: /**

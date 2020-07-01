@@ -4,6 +4,11 @@ spring:
   cloud:
     nacos:
       server-addr: 127.0.0.1:8848
+    sentinel:
+      transport:
+        dashboard: localhost:8888
+      filter:
+        url-patterns: /**
   thymeleaf:
     cache: false
   redis:
