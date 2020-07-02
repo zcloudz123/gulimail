@@ -19,7 +19,8 @@ spring:
     cache: false
   cloud:
     nacos:
-      server-addr: 127.0.0.1:8848
+      discovery:
+        server-addr: 127.0.0.1:8848
     alibaba:
       seata:
         tx-service-group: my_test_tx_group
