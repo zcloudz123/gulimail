@@ -3,7 +3,8 @@ spring:
     name: gulimall-seckill
   cloud:
     nacos:
-      server-addr: 127.0.0.1:8848
+      discovery:
+        server-addr: 127.0.0.1:8848
     sentinel:
       transport:
         dashboard: localhost:8888
@@ -25,5 +26,13 @@ spring:
     virtual-host: /
   thymeleaf:
     cache: false
+  zipkin:
+    base-url: http://192.168.159.129:9411/
+    discovery-client-enabled: false
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1
 server:
   port: 16000

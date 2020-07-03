@@ -80,6 +80,14 @@ spring:
         server-addr: 127.0.0.1:8848
   application:
     name: gulimall-gateway
+  zipkin:
+    base-url: http://192.168.159.129:9411/
+    discovery-client-enabled: false
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1
 server:
   port: 88
 logging:

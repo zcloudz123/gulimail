@@ -22,6 +22,14 @@ spring:
     name: gulimall-member
   thymeleaf:
     cache: false
+  zipkin:
+    base-url: http://192.168.159.129:9411/
+    discovery-client-enabled: false
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   global-config:

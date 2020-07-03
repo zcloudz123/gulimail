@@ -13,6 +13,14 @@ spring:
     alibaba:
       oss:
         enabled: true
+  zipkin:
+    base-url: http://192.168.159.129:9411/
+    discovery-client-enabled: false
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1
 server:
   port: 12000
 

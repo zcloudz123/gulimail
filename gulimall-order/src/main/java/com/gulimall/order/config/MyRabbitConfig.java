@@ -8,6 +8,7 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
@@ -18,19 +19,23 @@ import javax.annotation.PostConstruct;
  */
 @Configuration
 public class MyRabbitConfig {
+    //使用json序列化器
+    @Bean
+    public MessageConverter messageConverter() {
+        return new Jackson2JsonMessageConverter();
+    }
+
+}
+
+@Component
+class MyRabbitCallbackConfig {
 
     @Autowired
     RabbitTemplate rabbitTemplate;
 
-    //使用json序列化器
-    @Bean
-    public MessageConverter messageConverter(){
-        return new Jackson2JsonMessageConverter();
-    }
-
     //定制RabbitTemplate
     @PostConstruct
-    public void initRabbitTemplate(){
+    public void initRabbitTemplate() {
         //消息抵达Broker的确认回调
         rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
             @Override

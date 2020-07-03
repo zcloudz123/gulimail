@@ -26,11 +26,19 @@ spring:
     type: redis
     redis:
       time-to-live: 3600000
-#      key-prefix: CACHE_
+      #      key-prefix: CACHE_
       use-key-prefix: true
       cache-null-values: true #缓存空值
   session:
     store-type: redis
+  zipkin:
+    base-url: http://192.168.159.129:9411/
+    discovery-client-enabled: false
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   global-config:
@@ -43,6 +51,8 @@ server:
 logging:
   level:
     com.gulimall.product: debug
+    org.springframework.cloud.openfeign: debug
+    org.springframework.cloud.sleuth: debug
 gulimall:
   thread:
     coreSize: 20

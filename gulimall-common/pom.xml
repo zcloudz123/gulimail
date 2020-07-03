@@ -11,6 +11,9 @@
 
     <artifactId>gulimall-common</artifactId>
     <description>公共依赖,bean,工具类</description>
+    <properties>
+        <spring-cloud.version>Hoxton.SR5</spring-cloud.version>
+    </properties>
 
     <dependencies>
 <!--        mybatisplus-->
@@ -80,6 +83,12 @@
             <version>2.0.1.Final</version>
         </dependency>
 
+<!--        链路追踪-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-zipkin</artifactId>
+        </dependency>
+
 
 <!--        <dependency>-->
 <!--            <groupId>com.alibaba.cloud</groupId>-->
@@ -105,6 +114,13 @@
                 <groupId>com.alibaba.cloud</groupId>
                 <artifactId>spring-cloud-alibaba-dependencies</artifactId>
                 <version>2.2.0.RELEASE</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

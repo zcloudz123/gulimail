@@ -24,3 +24,11 @@ spring:
         dashboard: localhost:8888
       filter:
         url-patterns: /**
+  zipkin:
+    base-url: http://192.168.159.129:9411/
+    discovery-client-enabled: false
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1
